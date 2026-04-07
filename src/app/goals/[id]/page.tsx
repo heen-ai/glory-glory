@@ -36,7 +36,7 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
 
       {/* Video */}
       {goal.youtube_url && (
-        <div className="aspect-video bg-black rounded-xl overflow-hidden">
+        <div className="aspect-video bg-black border overflow-hidden">
           <iframe
             src={goal.youtube_url.replace('watch?v=', 'embed/')}
             className="w-full h-full"

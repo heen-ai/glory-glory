@@ -27,19 +27,19 @@ export default function GoalsPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold">Goals Archive</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Goals Archive</h1>
           <p className="text-white/50 mt-1">{filteredGoals.filter(g => g.scorer).length} goals this season</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setView('table')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${view === 'table' ? 'bg-[#DA291C] text-white' : 'bg-white/10 text-white/70'}`}
+            className={`px-4 py-2  font-medium transition-colors ${view === 'table' ? 'bg-[#DA291C] text-white' : 'bg-white/10 text-white/70'}`}
           >
             Table
           </button>
           <button
             onClick={() => setView('gallery')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${view === 'gallery' ? 'bg-[#DA291C] text-white' : 'bg-white/10 text-white/70'}`}
+            className={`px-4 py-2  font-medium transition-colors ${view === 'gallery' ? 'bg-[#DA291C] text-white' : 'bg-white/10 text-white/70'}`}
           >
             Gallery
           </button>
@@ -51,7 +51,7 @@ export default function GoalsPage() {
         <select
           value={scorerFilter}
           onChange={(e) => setScorerFilter(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
+          className="bg-white/10 border border-white/20  px-4 py-2 text-white"
         >
           <option value="">All Scorers</option>
           {scorers.map(s => (
@@ -61,7 +61,7 @@ export default function GoalsPage() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
+          className="bg-white/10 border border-white/20  px-4 py-2 text-white"
         >
           <option value="">All Types</option>
           {goalTypes.map(t => (
@@ -71,7 +71,7 @@ export default function GoalsPage() {
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
+          className="bg-white/10 border border-white/20  px-4 py-2 text-white"
         >
           <option value="">All Tags</option>
           {tags.map(t => (
@@ -140,7 +140,7 @@ export default function GoalsPage() {
             <Link
               key={goal.id}
               href={`/goals/${goal.id}`}
-              className="card hover:border-[#DA291C] transition-all group"
+              className="border border-white/10 hover:border-[#DA291C] transition-all group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div>

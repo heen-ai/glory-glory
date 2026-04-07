@@ -43,12 +43,10 @@ export default function MatchDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex gap-1">
-          <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-        </div>
+      <div className="flex items-center gap-1.5 py-16">
+        <div className="w-1 h-1 bg-white/40 rounded-full animate-pulse" />
+        <div className="w-1 h-1 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+        <div className="w-1 h-1 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
       </div>
     );
   }
@@ -56,11 +54,11 @@ export default function MatchDetailPage() {
   if (error || !match) {
     return (
       <div className="space-y-6">
-        <Link href="/matches" className="text-sm text-white/40 hover:text-white">
+        <Link href="/matches" className="text-xs text-white/40 hover:text-white/70">
           ← Back to Matches
         </Link>
-        <div className="border border-white/10 p-8 text-center">
-          <p className="text-white/50">{error || 'Match not found'}</p>
+        <div className="border border-white/10 px-5 py-8 text-center">
+          <p className="text-sm text-white/40">{error || 'Match not found'}</p>
         </div>
       </div>
     );
@@ -78,90 +76,90 @@ export default function MatchDetailPage() {
   const displayAway = isManUtdHome ? match.awayTeam : match.homeTeam;
   const displayHomeScore = isManUtdHome ? match.homeScore : match.awayScore;
   const displayAwayScore = isManUtdHome ? match.awayScore : match.homeScore;
-
-  // Get team ID for shot map
   const shotsTeamId = isManUtdHome ? match.homeTeam.id : match.awayTeam.id;
 
   return (
     <div className="space-y-6">
-      {/* Back link */}
-      <Link href="/matches" className="text-sm text-white/40 hover:text-white">
+      {/* Back */}
+      <Link href="/matches" className="text-xs text-white/40 hover:text-white/70">
         ← Back
       </Link>
 
       {/* Match Header */}
       <div className="border border-white/10">
-        <div className="p-6">
+        {/* Score */}
+        <div className="px-5 py-5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-lg font-semibold">{displayHome.name}</p>
-              <p className="text-4xl font-mono font-bold mt-1">{displayHomeScore}</p>
+              <p className="text-sm font-medium text-white/60">{displayHome.name}</p>
+              <p className="text-[2.5rem] font-mono font-bold leading-none mt-1">{displayHomeScore}</p>
             </div>
-            <div className="text-center px-6">
-              <span className="text-xs font-medium px-2 py-1 bg-white/10 text-white/70">
+            <div className="text-center px-4">
+              <p className="text-[10px] text-white/30 leading-tight">
                 {match.status.scoreStr || ''}
-              </span>
-              {match.status.utcTime && (
-                <p className="text-sm text-white/40 mt-2">
-                  {new Date(match.status.utcTime).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
-              )}
+                {match.status.utcTime && (
+                  <>
+                    <br />
+                    {new Date(match.status.utcTime).toLocaleDateString('en-GB', {
+                      day: 'numeric', month: 'short',
+                    })}
+                  </>
+                )}
+              </p>
             </div>
             <div className="flex-1 text-right">
-              <p className="text-lg font-semibold">{displayAway.name}</p>
-              <p className="text-4xl font-mono font-bold mt-1">{displayAwayScore}</p>
+              <p className="text-sm font-medium text-white/60">{displayAway.name}</p>
+              <p className="text-[2.5rem] font-mono font-bold leading-none mt-1">{displayAwayScore}</p>
             </div>
           </div>
         </div>
 
-        {/* xG bar */}
+        {/* xG */}
         {match.stats.xg && (
-          <div className="border-t border-white/10 px-6 py-3">
+          <div className="border-t border-white/8 px-5 py-3">
             <div className="flex items-center gap-3">
-              <span className="text-xs text-white/40 w-12">{match.stats.xg.home.toFixed(2)} xG</span>
-              <div className="flex-1 flex h-1 rounded-sm overflow-hidden">
+              <span className="text-[11px] text-white/35 w-10 text-right font-mono">
+                {match.stats.xg.home.toFixed(2)}
+              </span>
+              <div className="flex-1 flex h-[3px]">
                 <div
                   className="bg-[#DA291C]"
                   style={{
                     width: `${(match.stats.xg!.home / (match.stats.xg!.home + match.stats.xg!.away)) * 100}%`,
                   }}
                 />
-                <div className="bg-white/20 flex-1" />
+                <div className="bg-white/10 flex-1" />
               </div>
-              <span className="text-xs text-white/40 w-12 text-right">{match.stats.xg.away.toFixed(2)} xG</span>
+              <span className="text-[11px] text-white/35 w-10 font-mono">
+                {match.stats.xg.away.toFixed(2)}
+              </span>
             </div>
+            <p className="text-[9px] text-white/20 text-center mt-1 uppercase tracking-wider">xG</p>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="border-t border-white/10">
-          <div className="flex">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
-                  activeTab === tab.id
-                    ? 'border-[#DA291C] text-white'
-                    : 'border-transparent text-white/40 hover:text-white/70'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="border-t border-white/8 flex">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-3 text-[13px] font-medium transition-colors border-b-2 ${
+                activeTab === tab.id
+                  ? 'border-[#DA291C] text-white'
+                  : 'border-transparent text-white/35 hover:text-white/60'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* Tab Content */}
-        <div className="p-6">
+        {/* Content */}
+        <div className="px-5 py-5">
           {activeTab === 'events' && (
             <EventTimeline events={match.events} homeTeamId={homeTeamId} />
           )}
-          
           {activeTab === 'stats' && (
             <MatchStats
               stats={match.stats}
@@ -169,7 +167,6 @@ export default function MatchDetailPage() {
               awayTeamName={match.awayTeam.name}
             />
           )}
-          
           {activeTab === 'shots' && (
             <ShotMap shots={match.shots} homeTeamId={shotsTeamId} />
           )}

@@ -64,7 +64,7 @@ export default function ChatPage() {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-xl px-4 py-3 ${
+              className={`max-w-[80%] border px-4 py-3 ${
                 msg.role === 'user'
                   ? 'bg-[#DA291C] text-white'
                   : 'bg-white/10 text-white'
@@ -78,11 +78,11 @@ export default function ChatPage() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white/10 rounded-xl px-4 py-3">
+            <div className="bg-white/10 border px-4 py-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-white/50 border animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-white/50 border animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-white/50 border animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function ChatPage() {
             <button
               key={example}
               onClick={() => setInput(example)}
-              className="text-sm bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full transition-colors"
+              className="text-sm bg-white/5 hover:bg-white/10 px-3 py-1 border transition-colors"
             >
               {example}
             </button>

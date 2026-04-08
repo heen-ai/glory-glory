@@ -1,78 +1,185 @@
-import axios from 'axios';
+/**
+ * Glory Glory — SportSRC Data Layer
+ * 
+ * API V2 — Basic plan
+ * Docs: https://sportsrc.org/v2/#docs
+ * Header: X-API-KEY
+ */
 
 const SPORTSRC_BASE = 'https://api.sportsrc.org/v2';
+const API_KEY = process.env.SPORTSRC_API_KEY || '';
 
-export interface MatchEvent {
+function headers() {
+  return {
+    'X-API-KEY': API_KEY,
+    'Accept': 'application/json',
+  };
+}
+
+export interface StreamSource {
+  source: string;
+  embedUrl: string;
+  hd: boolean;
+  language: string;
+  title?: string;
+}
+
+export interface MatchInfo {
   id: string;
+  title: string;
   time: string;
-  type: 'goal' | 'card' | 'sub' | 'var' | 'kickoff' | 'halftime' | 'fulltime';
-  team: 'home' | 'away';
-  player?: string;
-  assist?: string;
-  minute?: number;
-  detail?: string;
-}
-
-export interface Match {
-  id: string;
+  status: string;
   league: string;
-  home_team: string;
-  away_team: string;
-  home_score: number;
-  away_score: number;
-  status: 'live' | 'finished' | 'upcoming' | 'postponed';
-  datetime: string;
-  has_stream?: boolean;
-  has_standing?: boolean;
-  events?: MatchEvent[];
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
 }
 
-export interface MatchStats {
-  possession: { home: number; away: number };
-  shots: { home: number; away: number };
-  shotsOnTarget: { home: number; away: number };
-  corners: { home: number; away: number };
-  fouls: { home: number; away: number };
+export interface MatchDetail {
+  matchInfo: MatchInfo;
+  sources: StreamSource[];
+  info: string;
 }
 
-export async function getLiveScores(): Promise<Match[]> {
-  try {
-    const response = await axios.get(`${SPORTSRC_BASE}/scores`, {
-      timeout: 10000,
-    });
-    // Filter for Man Utd (team ID 33 or name variants)
-    const matches: Match[] = response.data?.data || response.data || [];
-    return matches.filter((m: Match) =>
-      m.home_team?.toLowerCase().includes('manchester united') ||
-      m.away_team?.toLowerCase().includes('manchester united') ||
-      m.home_team?.toLowerCase().includes('man utd') ||
-      m.away_team?.toLowerCase().includes('man utd')
-    );
-  } catch (error) {
-    console.error('SportSRC API error:', error);
-    return [];
+async function apiGet(params: Record<string, string>): Promise<any> {
+  const url = new URL(SPORTSRC_BASE);
+  url.searchParams.set('key', API_KEY);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, v);
   }
+  
+  const res = await fetch(url.toString(), { headers: headers() });
+  if (!res.ok) throw new Error(`SportSRC error: ${res.status}`);
+  const data = await res.json();
+  if (!data.success) throw new Error(data.message || 'SportSRC API error');
+  return data;
 }
 
-export async function getMatchDetails(matchId: string): Promise<Match | null> {
+// === Get match detail with stream sources ===
+export async function getMatchDetail(sportsrcId: string): Promise<MatchDetail | null> {
   try {
-    const response = await axios.get(`${SPORTSRC_BASE}/match/${matchId}`, {
-      timeout: 10000,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('SportSRC match details error:', error);
+    const data = await apiGet({ type: 'detail', id: sportsrcId });
+    const raw = data.data;
+    
+    const info = raw.match_info;
+    const sources: StreamSource[] = (raw.sources || [])
+      .filter((s: any) => s.embedUrl)
+      .map((s: any) => ({
+        source: s.source || s.name || 'Stream',
+        embedUrl: s.embed_url || s.embedUrl || s.url,
+        hd: s.hd || false,
+        language: s.language || '',
+        title: s.title || s.name,
+      }));
+
+    return {
+      matchInfo: {
+        id: info.id,
+        title: info.title,
+        time: info.time,
+        status: info.status,
+        league: info.league,
+        homeTeam: info.home_team || info.homeTeam,
+        awayTeam: info.away_team || info.awayTeam,
+        homeScore: parseInt(info.home_score) || 0,
+        awayScore: parseInt(info.away_score) || 0,
+      },
+      sources,
+      info: raw.info || '',
+    };
+  } catch (e) {
+    console.error('SportSRC detail error:', e);
     return null;
   }
 }
 
-export async function getManUtdUpcomingMatch(): Promise<Match | null> {
-  const matches = await getLiveScores();
-  const upcoming = matches.find(m => m.status === 'upcoming');
-  return upcoming || null;
+// === Get matches for a date ===
+export interface SportSrcMatch {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  home: string;
+  away: string;
+  homeId: string;
+  awayId: string;
+  status: string;
+  homeScore: number;
+  awayScore: number;
+  hasStream: boolean;
+  fotmobId?: number;
 }
 
-export async function getManUtdLiveMatch(): Promise<Match | null> {
-  const matches = await getLiveScores();
-  return matches.find(m => m.status === 'live') || null;
+export async function getMatchesForDate(date: string): Promise<SportSrcMatch[]> {
+  try {
+    const data = await apiGet({ type: 'matches', sport: 'football', date });
+    const matches: SportSrcMatch[] = [];
+    
+    for (const league of data.data || []) {
+      const leagueId = league.id || '';
+      const leagueName = league.name || '';
+      
+      for (const m of league.matches || []) {
+        const teams = m.teams || {};
+        const homeTeam = teams.home || {};
+        const awayTeam = teams.away || {};
+        
+        matches.push({
+          id: m.id,
+          leagueId,
+          leagueName,
+          home: homeTeam.name || '',
+          away: awayTeam.name || '',
+          homeId: homeTeam.id || '',
+          awayId: awayTeam.id || '',
+          status: m.status || '',
+          homeScore: parseInt(m.score?.current?.home) || 0,
+          awayScore: parseInt(m.score?.current?.away) || 0,
+          hasStream: m.has_stream || false,
+        });
+      }
+    }
+    
+    return matches;
+  } catch (e) {
+    console.error('SportSRC matches error:', e);
+    return [];
+  }
+}
+
+// === Get Man Utd match ===
+export async function findManUtdMatch(date: string): Promise<SportSrcMatch | null> {
+  const matches = await getMatchesForDate(date);
+  
+  return (
+    matches.find(m =>
+      m.home.toLowerCase().includes('manchester united') ||
+      m.away.toLowerCase().includes('manchester united')
+    ) || null
+  );
+}
+
+// === Channel list (all available stream channels) ===
+export interface Channel {
+  id: string;
+  name: string;
+  language: string;
+  embedUrl: string;
+  category?: string;
+}
+
+export async function getChannels(matchId: string): Promise<Channel[]> {
+  try {
+    const data = await apiGet({ type: 'channels', id: matchId });
+    return (data.data || []).map((c: any) => ({
+      id: c.id || c.name,
+      name: c.name || c.channel_name,
+      language: c.language || '',
+      embedUrl: c.embed_url || c.embedUrl || '',
+      category: c.category || '',
+    })).filter((c: Channel) => c.embedUrl);
+  } catch (e) {
+    console.error('SportSRC channels error:', e);
+    return [];
+  }
 }

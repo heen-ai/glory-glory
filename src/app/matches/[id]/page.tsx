@@ -7,14 +7,16 @@ import ShotMap from '@/components/ShotMap';
 import EventTimeline from '@/components/EventTimeline';
 import MatchStats from '@/components/MatchStats';
 import { MatchDetails } from '@/lib/fotmob';
+import { MatchDetail as SportSrcMatch } from '@/lib/sportsrc';
 
-type Tab = 'events' | 'stats' | 'shots';
+type Tab = 'events' | 'stats' | 'shots' | 'watch';
 
 export default function MatchDetailPage() {
   const params = useParams();
   const matchId = params.id as string;
   
   const [match, setMatch] = useState<MatchDetails | null>(null);
+  const [stream, setStream] = useState<SportSrcMatch | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('events');
@@ -22,12 +24,14 @@ export default function MatchDetailPage() {
   useEffect(() => {
     if (!matchId) return;
     
-    async function fetchMatch() {
+    async function fetchData() {
       try {
-        const response = await fetch(`/api/matches?matchId=${matchId}`);
-        const data = await response.json();
+        const res = await fetch(`/api/matches?matchId=${matchId}`);
+        const data = await res.json();
+        
         if (data.match) {
           setMatch(data.match);
+          setStream(data.stream || null);
         } else {
           setError('Match not found');
         }
@@ -38,7 +42,7 @@ export default function MatchDetailPage() {
       }
     }
     
-    fetchMatch();
+    fetchData();
   }, [matchId]);
 
   if (loading) {
@@ -68,6 +72,7 @@ export default function MatchDetailPage() {
     { id: 'events', label: 'Events' },
     { id: 'stats', label: 'Stats' },
     { id: 'shots', label: 'Shot Map' },
+    { id: 'watch', label: 'Watch' },
   ];
 
   const homeTeamId = match.homeTeam.id;
@@ -77,6 +82,9 @@ export default function MatchDetailPage() {
   const displayHomeScore = isManUtdHome ? match.homeScore : match.awayScore;
   const displayAwayScore = isManUtdHome ? match.awayScore : match.homeScore;
   const shotsTeamId = isManUtdHome ? match.homeTeam.id : match.awayTeam.id;
+
+  const hasStream = stream?.sources && stream.sources.length > 0;
+  const embedUrl = stream?.sources?.[0]?.embedUrl;
 
   return (
     <div className="space-y-6">
@@ -151,6 +159,9 @@ export default function MatchDetailPage() {
               }`}
             >
               {tab.label}
+              {tab.id === 'watch' && hasStream && (
+                <span className="ml-1.5 w-1.5 h-1.5 bg-[#DA291C] inline-block rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -170,8 +181,77 @@ export default function MatchDetailPage() {
           {activeTab === 'shots' && (
             <ShotMap shots={match.shots} homeTeamId={shotsTeamId} />
           )}
+          {activeTab === 'watch' && (
+            <WatchTab stream={stream} />
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function WatchTab({ stream }: { stream: SportSrcMatch | null }) {
+  const hasStream = stream?.sources && stream.sources.length > 0;
+  const embedUrl = stream?.sources?.[0]?.embedUrl;
+  
+  if (!hasStream || !embedUrl) {
+    return (
+      <div className="space-y-4">
+        <div className="border border-white/10 px-5 py-8 text-center">
+          <p className="text-sm text-white/50">Stream not yet available</p>
+          <p className="text-xs text-white/30 mt-1">
+            Streams are typically available closer to kickoff
+          </p>
+        </div>
+        <div className="text-center">
+          <a
+            href={`https://sport99.live`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[#DA291C] hover:underline"
+          >
+            Watch on SportSRC →
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Source info */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-white/50">
+            {stream.sources[0].title || stream.sources[0].source}
+            {stream.sources[0].hd && <span className="ml-2 text-[#DA291C]">HD</span>}
+          </p>
+        </div>
+        <a
+          href={`https://sport99.live`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-white/30 hover:text-white/60"
+        >
+          SportSRC →
+        </a>
+      </div>
+      
+      {/* Stream embed */}
+      <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full border-0"
+          allowFullScreen
+          allow="autoplay; fullscreen"
+          scrolling="no"
+        />
+      </div>
+      
+      {/* Disclaimer */}
+      <p className="text-[10px] text-white/20 text-center">
+        Stream provided by SportSRC. External content.
+      </p>
     </div>
   );
 }
